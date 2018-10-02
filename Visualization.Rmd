@@ -183,3 +183,43 @@ weather_df %>%
   geom_boxplot()
 ```
 
+## part ii
+
+### scatterplot with parameter
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  )
+```
+
+tick makrs and labels (not that x is continuous here)
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  scale_x_continuous(breaks = c(-15, 0, 15), 
+                     labels = c("-15º C", "0º C", "15º C")
+  ) +
+  scale_y_continuous(
+    position = "right", 
+    trans = "sqrt"
+  )
+```
+
+### color and theme
+
+```{r}
+
+```
