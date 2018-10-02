@@ -21,20 +21,18 @@ library(ggridges)
 data import
 
 ```{r data import, cache=TRUE}
-if (!weather_df) {
-  weather_df = 
-    rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
-                        var = c("PRCP", "TMIN", "TMAX"), 
-                        date_min = "2017-01-01",
-                        date_max = "2017-12-31") %>%
-    mutate(
-      name = recode(id, USW00094728 = "CentralPark_NY", 
-                        USC00519397 = "Waikiki_HA",
-                        USS0023B17S = "Waterhole_WA"),
-      tmin = tmin / 10,
-      tmax = tmax / 10) %>%
-    select(name, id, everything())
-}
+weather_df = 
+  rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                      var = c("PRCP", "TMIN", "TMAX"), 
+                      date_min = "2017-01-01",
+                      date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY", 
+                      USC00519397 = "Waikiki_HA",
+                      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
 ```
 
 ## start a plot
@@ -220,6 +218,103 @@ ggplot(weather_df, aes(x = tmin, y = tmax)) +
 
 ### color and theme
 
-```{r}
+adjust color
 
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  scale_color_hue(
+    name = "location", 
+    h = c(100,350), 
+    l = 75, 
+  )
+```
+
+using viridis package for a better plot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE, 
+  )
+```
+
+change the legend
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE, 
+  ) +
+  theme(legend.position = "bottom")
+```
+
+change the grey background
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = .5) + 
+  labs(
+    title = "Temperature plot",
+    x = "Minimum daily temperature (C)",
+    y = "Maxiumum daily temperature (C)",
+    caption = "Data from the rnoaa package"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE, 
+  ) +
+  theme_bw() +
+  theme(legend.position = "bottom") # here, order matters. If you put theme precedent to theme_bw, when the theme_bw applied, it will overwrite all the former parameters.
+```
+
+assessment
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(
+    title = "tmax over the year"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE, 
+  ) + 
+  theme(legend.position = "bottom")
+```
+
+### geom_* arguments
+
+Adding plot using data from another dataset
+
+```{r}
+centralpark_df = weather_df %>% filter(name == "CentralPark_NY")
+waikiki_df = weather_df %>% filter(name == "Waikiki_HA")
+
+ggplot(waikiki_df, aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  geom_line(data = centralpark_df)
 ```
