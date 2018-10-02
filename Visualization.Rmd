@@ -1,15 +1,185 @@
 ---
 title: "Visualization"
 output:
-  html_document:
+  github_document:
     toc: true
-    toc_float: true
 author: Guojing Wu
 data: 2018-09-27
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set( # default setting
+  echo = TRUE, 
+  fig.width = 6, 
+  fig.asp = 0.6, 
+  out.width = "90%")
 library(tidyverse)
+library(rnoaa)
+library(ggridges)
+```
+
+data import
+
+```{r data import, cache=TRUE}
+if (!weather_df) {
+  weather_df = 
+    rnoaa::meteo_pull_monitors(c("USW00094728", "USC00519397", "USS0023B17S"),
+                        var = c("PRCP", "TMIN", "TMAX"), 
+                        date_min = "2017-01-01",
+                        date_max = "2017-12-31") %>%
+    mutate(
+      name = recode(id, USW00094728 = "CentralPark_NY", 
+                        USC00519397 = "Waikiki_HA",
+                        USS0023B17S = "Waterhole_WA"),
+      tmin = tmin / 10,
+      tmax = tmax / 10) %>%
+    select(name, id, everything())
+}
+```
+
+## start a plot
+
+blank
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax))
+```
+
+scatterplot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+filter
+
+```{r}
+weather_df %>%
+  filter(name == "CentralPark_NY") %>%
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+or just save it into a variable
+
+```{r}
+weather_sp = 
+  ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point()
+```
+
+### more options
+
+color
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name))
+```
+
+add a geom
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name)) +
+  geom_smooth(se = FALSE)
+```
+
+make it transparent
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name, alpha = 0.4)) +
+  geom_smooth(se = FALSE)
+```
+
+so what will happen if I put color parameters in ggplot()? It became a global parameter
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+```
+
+now we seperate the plot into different facets according to name
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_grid( ~ name)
+```
+
+### other interesting plot
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax)) +
+  geom_point(aes(color = name))
+```
+
+using line instead
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax)) +
+  geom_line(aes(color = name))
+```
+
+seperate them
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_grid( ~ name)
+```
+
+if you put color parameters into aes(), and "blue" doesn't exist, it'll just create another variable "color" and make every term equals to "blue"
+
+```{r}
+ggplot(weather_df) + geom_point(aes(x = tmax, y = tmin), color = "blue")
+ggplot(weather_df) + geom_point(aes(x = tmax, y = tmin, color = "blue"))
+```
+
+### density plot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, fill = name)) +
+  geom_density(alpha = 0.4)
+```
+
+### boxplot
+
+```{r}
+ggplot(weather_df, aes(x = name, y = tmax)) +
+  geom_boxplot()
+```
+
+### ridges plot
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = name)) +
+  geom_density_ridges(scale = 0.5)
+```
+
+## last example
+
+make a bunch of plot
+
+```{r}
+ggplot(weather_df, aes(y = prcp, x = name)) +
+  geom_boxplot()
+```
+
+```{r}
+ggplot(weather_df, aes(y = prcp, x = name)) +
+  geom_violin()
+```
+
+```{r}
+weather_df %>%
+  filter(prcp < 100) %>%
+  ggplot(aes(y = prcp, x = name)) +
+  geom_boxplot()
 ```
 
