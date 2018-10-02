@@ -13,9 +13,11 @@ knitr::opts_chunk$set( # default setting
   fig.width = 6, 
   fig.asp = 0.6, 
   out.width = "90%")
+devtools::install_github("thomasp85/patchwork")
 library(tidyverse)
 library(rnoaa)
 library(ggridges)
+library(patchwork)
 ```
 
 data import
@@ -317,4 +319,77 @@ waikiki_df = weather_df %>% filter(name == "Waikiki_HA")
 ggplot(waikiki_df, aes(x = date, y = tmax, color = name)) +
   geom_point() +
   geom_line(data = centralpark_df)
+```
+
+## patch work
+
+facet argument can seperate the plot, but when it comes to integrate fundamentally different, facet won't help.
+
+```{r}
+ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  facet_grid( ~ name) +
+  labs(
+    title = "tmax over the year"
+  ) + 
+  viridis::scale_color_viridis(
+    name = "location", 
+    discrete = TRUE, 
+  ) + 
+  theme(legend.position = "bottom")
+```
+
+instead, we use patchwork (default setting shall refer to the begnining settings)
+
+```{r}
+tmax_tmin_p = ggplot(weather_df, aes(x = tmax, y = tmin, color = name)) + 
+  geom_point(alpha = .5) +
+  theme(legend.position = "none")
+
+prcp_dens_p = weather_df %>% 
+  filter(prcp > 0) %>% 
+  ggplot(aes(x = prcp, fill = name)) + 
+  geom_density(alpha = .5) + 
+  theme(legend.position = "none")
+
+tmax_date_p = ggplot(weather_df, aes(x = date, y = tmax, color = name)) + 
+  geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) + 
+  theme(legend.position = "bottom")
+
+(tmax_tmin_p + prcp_dens_p) / tmax_date_p
+```
+
+## data manipulation
+
+factors ...
+
+```{r}
+weather_df %>%
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+change the order of variables (since the name are coerge to factors in ggplot, we convert the name)
+
+```{r}
+weather_df %>%
+  mutate(name = forcats::fct_relevel(name, c("Waikiki_HA", "CentralPark_NY", "Waterhole_WA"))) %>% 
+  ggplot(aes(x = name, y = tmax)) + 
+  geom_violin(aes(fill = name), color = "blue", alpha = .5) + 
+  theme(legend.position = "bottom")
+```
+
+Advanced tidying (data and plot)
+
+```{r}
+weather_df %>%
+  select(name, tmax, tmin) %>% 
+  gather(key = observation, value = temp, tmax:tmin) %>% 
+  ggplot(aes(x = temp, fill = observation)) +
+  geom_density(alpha = .5) + 
+  facet_grid(~name) + 
+  viridis::scale_fill_viridis(discrete = TRUE)
 ```
